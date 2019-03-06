@@ -10,12 +10,10 @@ spec:
         bluechatter: redis
     spec:
       containers:
-      - image: redis
-        name: redis
+        - image: redis
+          name: redis
       restartPolicy: Always
 ---
-
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -25,35 +23,38 @@ metadata:
 spec:
   clusterIP: None
   ports:
-  - name: headless
-    port: 55555
-    targetPort: 0
+    - name: headless
+      port: 55555
+      targetPort: 0
   selector:
     bluechatter: redis
 ---
-
-
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: web
 spec:
-  replicas: 1
+  replicas: 2
   template:
     metadata:
       labels:
         bluechatter: web
     spec:
       containers:
-      - name: web
-        image: registry.ng.bluemix.net/<namespace>/bluechatter_app
-        ports:
-        - containerPort: 80
-        - containerPort: 8080
+        - name: web
+          image: registry.ng.bluemix.net/<namespace>/bluechatter_app
+          imagePullPolicy: Always
+          env:
+            - name: appidSecrets
+              valueFrom:
+                secretKeyRef:
+                  name: binding-appid-bluechatter
+                  key: binding
+          ports:
+            - containerPort: 80
+            - containerPort: 8080
       restartPolicy: Always
 ---
-
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -63,8 +64,8 @@ metadata:
 spec:
   type: NodePort
   ports:
-  - name: "80"
-    port: 80
-    nodePort: 30089
+    - name: "80"
+      port: 80
+      nodePort: 30089
   selector:
     bluechatter: web
